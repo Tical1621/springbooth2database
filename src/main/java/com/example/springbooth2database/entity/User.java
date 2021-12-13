@@ -21,7 +21,7 @@ public class User {
 
     private String name;
 
-    private Long age;
+    private int age;
 
     @CreationTimestamp
     @Column(name="created_at",nullable = false,updatable = false)//чтобы update не обновлял create date

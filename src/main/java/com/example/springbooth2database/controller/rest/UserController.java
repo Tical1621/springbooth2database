@@ -4,6 +4,11 @@ package com.example.springbooth2database.controller.rest;
 import com.example.springbooth2database.entity.User;
 import com.example.springbooth2database.repository.UserRepository;
 import com.example.springbooth2database.repository.UserRepositoryCustom;
+import com.example.springbooth2database.service.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,16 +19,12 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
+@Slf4j
 public class UserController {
-
-
     private final UserRepository userRepo;
     private final UserRepositoryCustom userRepoCustom;
-
-    public UserController(UserRepository userRepo, UserRepositoryCustom userRepoCustom) {
-        this.userRepo = userRepo;
-        this.userRepoCustom = userRepoCustom;
-    }
+    private final UserService userService;
 
 
     @PostMapping
@@ -31,7 +32,7 @@ public class UserController {
         try {
             return new ResponseEntity<>(userRepo.save(user), HttpStatus.CREATED);
         } catch (Exception e) {
-            // TODO аккуратное логирование
+            log.error("exception with post request", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -45,7 +46,7 @@ public class UserController {
             }
             return new ResponseEntity<>(list, HttpStatus.OK);
         } catch (Exception e) {
-            // TODO аккуратное логирование
+            log.error("exception with get request", e);
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -63,24 +64,21 @@ public class UserController {
             user.ifPresent(userRepo::delete);
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (Exception e) {
-            // TODO аккуратное логирование
+            log.error("exception with delete request", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PutMapping("/{id}")
-    // TODO на входе не должно быть Entity класса. Если хочешь получить модель используй легковесный DTO
-    public ResponseEntity<User> updateUser(@RequestBody User user) {
-        try {
-            // TODO Переменная не испольуется
-            Optional<User> user1 = userRepoCustom.nativeUpdate(user);
-        } catch (SQLException e) {
-            // TODO аккуратное логирование
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        // TODO null ?
-        return null;
+    public UserDto updateUser(@RequestBody UserDto user) {
+//        try {
+            return userService.save(user);
+//            return ResponseEntity.ok(savedUser);
+
+//        } catch (Exception e) {
+//            log.error("exception with update request {}", e.getMessage());
+//            throw  new IllegalArgumentException();
+//            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR );
+//        }
     }
-
-
 }

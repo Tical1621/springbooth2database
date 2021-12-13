@@ -1,6 +1,9 @@
 package com.example.springbooth2database.repository;
 
 import com.example.springbooth2database.entity.User;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -9,9 +12,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Optional;
 
-@Repository
-public class UserRepositoryCustomImpl implements UserRepositoryCustom {
 
+@Repository
+@Slf4j
+public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     private final DataSource dataSource;
 
     public UserRepositoryCustomImpl(DataSource dataSource) {
@@ -20,27 +24,22 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
 
     @Override
     public Optional<User> nativeUpdate(User user) throws SQLException {
+        if (user.getId() == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
         String sql = "update users set age=?,name=? where id =?";
-
 
         try (final Connection connection = dataSource.getConnection();
              final PreparedStatement updateSql = connection.prepareStatement(sql)) {
-           // TODO зачем явным образом выключать автокоммит. Тебе не обязательно следить вручную за транзакцией
-            connection.setAutoCommit(false);
-            // TODO Объект для зависи не валидируется. Если в setLong передать null объект будет ошибка
-            updateSql.setLong(1, user.getAge());
+            updateSql.setInt(1, user.getAge());
             updateSql.setString(2, user.getName());
             updateSql.setLong(3, user.getId());
             updateSql.executeUpdate();
-            connection.commit();
-
+            return Optional.of(user);//if update success return user
         } catch (SQLException e) {
-            // TODO аккуратное логирование
-            e.printStackTrace();
-
+            log.error("Update error", e);
+            throw e;
         }
-        // TODO зачем null если в сигнатуре Optional
-        return null;
     }
 }
 
